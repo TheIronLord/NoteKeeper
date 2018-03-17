@@ -3,8 +3,13 @@
       xmlns:tools="http://schemas.android.com/tools"
       tools:context="com.bignerdranch.android.notekeeper.NoteActivity">
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/action_cancel"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never"/>
+        android:title="Cancel"/>
+    <item
+        android:id="@+id/action_send_mail"
+        android:layout_height="wrap_content"
+        android:orderInCategory="101"
+        android:title="Send as email"
+        />
 </menu>
