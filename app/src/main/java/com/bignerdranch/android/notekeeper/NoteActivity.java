@@ -14,6 +14,9 @@ import java.util.List;
 
 public class NoteActivity extends AppCompatActivity {
     public static final String NOTE_POSITION = "com.bignerdranch.android.notekeeper.NOTE_POSITION";
+    public static final String ORIGINAL_NOTE_COURSE_ID = "com.bignerdranch.android.notekeeper.ORIGINAL_NOTE_COURSE_ID";
+    public static final String ORIGINAL_NOTE_COURSE_TITLE = "com.bignerdranch.android.notekeeper.ORIGINAL_NOTE_COURSE_TITLE";
+    public static final String ORIGINAL_NOTE_TEXT = "come.bignerdranch.android.notekeeper.ORIGINAL_NOTE_COURSE_TEXT";
     public static final int POSITION_NOT_SET = -1;
     private NoteInfo mNote;
     private boolean mIsNewNote;
@@ -22,6 +25,9 @@ public class NoteActivity extends AppCompatActivity {
     private EditText mTextNoteText;
     private int mNewNotePosition;
     private boolean mIsCancelling;
+    private String mOriginalNoteCourseId;
+    private String mOriginalNoteText;
+    private String mOriginalNoteTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,8 +42,14 @@ public class NoteActivity extends AppCompatActivity {
         ArrayAdapter<CourseInfo> adapterCourses = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, courses);
         adapterCourses.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinnerCourses.setAdapter(adapterCourses);
-        
+
         readDisplayStateValues();
+
+        if(savedInstanceState == null) {
+            saveOriginalNoteValues();
+        } else {
+            restoreOriginalNoteValues(savedInstanceState);
+        }
 
         mTextNoteTitle = (EditText) findViewById(R.id.text_note_title);
         mTextNoteText = (EditText) findViewById(R.id.text_note_text);
@@ -47,6 +59,24 @@ public class NoteActivity extends AppCompatActivity {
         }
     }
 
+    // Restore the Activity State by retrieving the data put into the Bundle
+    private void restoreOriginalNoteValues(Bundle savedInstanceState) {
+        mOriginalNoteCourseId = savedInstanceState.getString(ORIGINAL_NOTE_COURSE_ID);
+        mOriginalNoteTitle = savedInstanceState.getString(ORIGINAL_NOTE_COURSE_TITLE);
+        mOriginalNoteText = savedInstanceState.getString(ORIGINAL_NOTE_TEXT);
+    }
+
+    // Save the original note
+    private void saveOriginalNoteValues() {
+        if(mIsNewNote){
+            return;
+        }
+        mOriginalNoteCourseId = mNote.getCourse().getCourseId();
+        mOriginalNoteTitle = mNote.getTitle();
+        mOriginalNoteText = mNote.getText();
+    }
+
+    // Display the note to the UI
     private void displayNote(Spinner spinnerCourses, EditText textNoteTitle, EditText textNoteText) {
         List<CourseInfo> courses = DataManager.getInstance().getCourses();
         int courseIndex = courses.indexOf(mNote.getCourse());
@@ -55,6 +85,7 @@ public class NoteActivity extends AppCompatActivity {
         textNoteText.setText(mNote.getText());
     }
 
+    // Read the data from the intent to display on UI
     private void readDisplayStateValues() {
         Intent intent = getIntent();
         int position = intent.getIntExtra(NOTE_POSITION, POSITION_NOT_SET);
@@ -68,6 +99,7 @@ public class NoteActivity extends AppCompatActivity {
         }
     }
 
+    // Create a new note
     private void createNewNote() {
         DataManager dm = DataManager.getInstance();
         mNewNotePosition = dm.createNewNote();
@@ -103,21 +135,45 @@ public class NoteActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        // If the user cancels we will first see if its a new note
+        // If it is a new new we will remove the new note
+        // If not we will restore the old note
+        // If the user is not cancelling we will save the note
         if(mIsCancelling) {
             if(mIsNewNote) {
                 DataManager.getInstance().removeNote(mNewNotePosition);
+            } else {
+                storePreviousNoteValues();
             }
         } else {
             saveNote();
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(ORIGINAL_NOTE_COURSE_ID, mOriginalNoteCourseId);
+        outState.putString(ORIGINAL_NOTE_COURSE_TITLE, mOriginalNoteTitle);
+        outState.putString(ORIGINAL_NOTE_TEXT, mOriginalNoteText);
+    }
+
+    // Restores previous note values
+    private void storePreviousNoteValues() {
+        CourseInfo course = DataManager.getInstance().getCourse(mOriginalNoteCourseId);
+        mNote.setCourse(course);
+        mNote.setTitle(mOriginalNoteTitle);
+        mNote.setText(mOriginalNoteText);
+    }
+
+    // Saves the note
     private void saveNote() {
         mNote.setCourse((CourseInfo) mSpinnerCourses.getSelectedItem());
         mNote.setTitle(mTextNoteTitle.getText().toString());
         mNote.setText(mTextNoteText.getText().toString());
     }
 
+    // Creates an Intent and starts an email Activity
     private void sendEmail() {
         CourseInfo course = (CourseInfo) mSpinnerCourses.getSelectedItem();
         String subject = mTextNoteTitle.getText().toString();
