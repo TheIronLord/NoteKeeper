@@ -4,12 +4,21 @@
       tools:context="com.bignerdranch.android.notekeeper.NoteActivity">
     <item
         android:id="@+id/action_cancel"
+        android:layout_height="wrap_content"
+        android:icon="@android:drawable/ic_menu_revert"
         android:orderInCategory="100"
-        android:title="Cancel"/>
+        android:title="Cancel"
+        app:showAsAction="ifRoom|withText"/>
+    <item
+        android:id="@+id/action_next"
+        android:icon="@android:drawable/ic_media_next"
+        android:orderInCategory="101"
+        android:title="Next"
+        app:showAsAction="ifRoom|withText"/>
     <item
         android:id="@+id/action_send_mail"
         android:layout_height="wrap_content"
-        android:orderInCategory="101"
+        android:orderInCategory="102"
         android:title="Send as email"
         />
 </menu>
